@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: "Find Your Parfect Job",
+    title: "Parfect Match Job",
     description:
         "Find your parfect job with our job search platform. We connect job seekers with top employers, making it easy to find the right job for you. Start your job search today and discover your parfect job!",
 };
