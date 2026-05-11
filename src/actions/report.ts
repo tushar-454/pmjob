@@ -205,7 +205,7 @@ Guidelines:
 - "title" should be a concise role name inferred from the job description.
 - "matchPercentage" should be an integer from 0 to 100.
 - "missingKeywords" should list skill or domain terms present in the JD but missing from the resume.
-- "matchedKeywords" should list skills that appear in both.
+- "matchedKeywords" should list skills that appear in both the JD and the resume if they are present bychance no match found keep it [] only match skill add strict check.
 - "experienceRecommendations" should be a clear paragraph with 2-4 actionable items. Write it as advice.
 - "formattingRecommendations" should be a clear paragraph focused on layout, clarity, or consistency.
 - Be specific and realistic. Do not invent credentials not found in the resume.
