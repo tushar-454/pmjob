@@ -17,4 +17,9 @@
     "images": {
         "binding": "IMAGES",
     },
+    //  disable workers.dev subdomain
+    "workers_dev": false,
+
+    // disable preview urls
+    "preview_urls": false,
 }
