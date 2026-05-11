@@ -4,7 +4,7 @@ import { generateReport } from "@/actions/report";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowUp, Plus } from "lucide-react";
-// import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import FilePreview from "./FilePreview";
@@ -14,7 +14,7 @@ export default function ChatInputForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-    // const router = useRouter();
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -33,7 +33,7 @@ export default function ChatInputForm() {
                 toast.success(res.message);
                 setInput("");
                 setFile(null);
-                // router.refresh();
+                router.push(`/report/${res.id}`);
             } else {
                 toast.error("Failed to generate report");
             }

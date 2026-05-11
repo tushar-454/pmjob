@@ -20,16 +20,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export function SidebarSheet() {
-    const history = [
-        "Senior Frontend Eng @ Vercel",
-        "Product Manager - Stripe",
-        "Fullstack Dev - Google",
-        "React Native Contractor",
-        "Backend Eng - OpenAI",
-        "UX Designer position",
-        "Growth Marketer - Notion",
-    ];
+type SidebarSheetProps = {
+    reports: Array<{ id: number; title: string }>;
+};
+
+export function SidebarSheet({ reports }: SidebarSheetProps) {
+    const hasReports = reports.length > 0;
 
     return (
         <Sheet>
@@ -67,16 +63,24 @@ export function SidebarSheet() {
                     </h2>
                     <ScrollArea className="flex-1 -mx-2 px-2">
                         <div className="space-y-1">
-                            {history.map((job, i) => (
-                                <Link
-                                    key={i}
-                                    href={`/report/mock-uuid-${i}`}
-                                    className="flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-                                >
-                                    <MessageSquare className="h-4 w-4 shrink-0" />
-                                    <span className="truncate">{job}</span>
-                                </Link>
-                            ))}
+                            {hasReports ? (
+                                reports.map((report) => (
+                                    <Link
+                                        key={report.id}
+                                        href={`/report/${report.id}`}
+                                        className="flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                                    >
+                                        <MessageSquare className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">
+                                            {report.title || "Untitled report"}
+                                        </span>
+                                    </Link>
+                                ))
+                            ) : (
+                                <p className="px-3 py-2 text-xs text-muted-foreground">
+                                    No reports yet.
+                                </p>
+                            )}
                         </div>
                     </ScrollArea>
                 </div>

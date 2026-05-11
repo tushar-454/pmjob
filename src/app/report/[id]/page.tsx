@@ -7,17 +7,38 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { getDB } from "@/db";
+import { reports } from "@/db/schema";
 import { AlertCircle, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 export default async function ReportDetailsPage({
     params,
 }: {
     params: Promise<{ id: string }>;
 }) {
-    const { id } = await params;
-    // Dummy dynamic data
-    const matchPercentage = 78;
+    const resolvedParams = await params;
+    const reportId = Number(resolvedParams.id);
+    if (!Number.isInteger(reportId)) {
+        notFound();
+    }
+
+    const db = await getDB();
+    const result = await db.select().from(reports);
+    const report = result.find((item) => item.id === reportId);
+
+    if (!report) {
+        notFound();
+    }
+
+    const matchPercentage = report.matchPercentage ?? 0;
+    const missingKeywords = report.missingKeywords ?? [];
+    const matchedKeywords = report.matchedKeywords ?? [];
+    const experienceRecommendations =
+        report.experienceRecommendations ?? "No recommendations available.";
+    const formattingRecommendations =
+        report.formattingRecommendations ?? "No recommendations available.";
 
     return (
         <div className="flex-1 overflow-y-auto">
@@ -35,10 +56,10 @@ export default async function ReportDetailsPage({
                     </Link>
                     <div className="flex flex-col">
                         <h1 className="text-xl font-bold tracking-tight">
-                            Report for Senior Frontend Engineer
+                            Report for {report.title}
                         </h1>
                         <span className="text-sm text-muted-foreground">
-                            ID: {id}
+                            ID: {report.id}
                         </span>
                     </div>
                 </div>
@@ -86,21 +107,20 @@ export default async function ReportDetailsPage({
                                         Missing Keywords
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
-                                        <Badge variant="destructive">
-                                            GraphQL
-                                        </Badge>
-                                        <Badge variant="destructive">
-                                            Next.js App Router
-                                        </Badge>
-                                        <Badge variant="destructive">
-                                            WebSockets
-                                        </Badge>
-                                        <Badge variant="destructive">
-                                            CI/CD Pipelines
-                                        </Badge>
-                                        <Badge variant="destructive">
-                                            Figma Handoff
-                                        </Badge>
+                                        {missingKeywords.length > 0 ? (
+                                            missingKeywords.map((keyword) => (
+                                                <Badge
+                                                    key={keyword}
+                                                    variant="destructive"
+                                                >
+                                                    {keyword}
+                                                </Badge>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">
+                                                No missing keywords detected.
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-2">
                                         We recommend adding these to your
@@ -115,36 +135,21 @@ export default async function ReportDetailsPage({
                                         Matched Keywords
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
-                                        <Badge
-                                            variant="outline"
-                                            className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border-none"
-                                        >
-                                            React
-                                        </Badge>
-                                        <Badge
-                                            variant="outline"
-                                            className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border-none"
-                                        >
-                                            TypeScript
-                                        </Badge>
-                                        <Badge
-                                            variant="outline"
-                                            className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border-none"
-                                        >
-                                            Tailwind CSS
-                                        </Badge>
-                                        <Badge
-                                            variant="outline"
-                                            className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border-none"
-                                        >
-                                            REST APIs
-                                        </Badge>
-                                        <Badge
-                                            variant="outline"
-                                            className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border-none"
-                                        >
-                                            Agile
-                                        </Badge>
+                                        {matchedKeywords.length > 0 ? (
+                                            matchedKeywords.map((keyword) => (
+                                                <Badge
+                                                    key={keyword}
+                                                    variant="outline"
+                                                    className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border-none"
+                                                >
+                                                    {keyword}
+                                                </Badge>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">
+                                                No matched keywords detected.
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -161,30 +166,8 @@ export default async function ReportDetailsPage({
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm">
                                 <div className="p-4 rounded-lg bg-muted">
-                                    <p className="font-semibold mb-1">
-                                        Impact Measurements are Missing
-                                    </p>
                                     <p className="text-muted-foreground">
-                                        Your latest role under &quot;E-Commerce
-                                        App&quot; lacks metrics. Try changing
-                                        &quot;Built a checkout flow&quot; to{" "}
-                                        <span className="italic text-foreground">
-                                            &quot;Built a checkout flow that
-                                            increased conversion by 14%&quot;
-                                        </span>
-                                        .
-                                    </p>
-                                </div>
-                                <div className="p-4 rounded-lg bg-muted">
-                                    <p className="font-semibold mb-1">
-                                        Highlight Modern State Management
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                        The job requires deep Redux Toolkit /
-                                        Zustand knowledge. Make sure your
-                                        &quot;Dashboard Project&quot; explicitly
-                                        states which state management library
-                                        was used.
+                                        {experienceRecommendations}
                                     </p>
                                 </div>
                             </CardContent>
@@ -198,26 +181,8 @@ export default async function ReportDetailsPage({
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm">
                                 <div className="p-4 rounded-lg bg-muted">
-                                    <p className="font-semibold mb-1">
-                                        Summary Section
-                                    </p>
                                     <p className="text-muted-foreground">
-                                        Consider rewriting your summary. Instead
-                                        of &quot;Hardworking developer&quot;,
-                                        align it with the job: &quot;Frontend
-                                        Engineer with 4+ years specializing in
-                                        React and performance
-                                        optimization.&quot;
-                                    </p>
-                                </div>
-                                <div className="p-4 rounded-lg bg-muted">
-                                    <p className="font-semibold mb-1">
-                                        Formatting issues
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                        We detected inconsistent dates in your
-                                        work history. Ensure you use MM/YYYY
-                                        layout consistently across all roles.
+                                        {formattingRecommendations}
                                     </p>
                                 </div>
                             </CardContent>

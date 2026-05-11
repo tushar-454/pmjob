@@ -30,30 +30,30 @@ export async function generateReport(formData: FormData) {
         const aiReport = await getAIReport(jobDescriptionText, resumeText);
         const parseAIReport = JSON.parse(aiReport);
 
-        console.log("######################################################");
-        console.log("AI Report:", parseAIReport);
-        console.log("######################################################");
-
         const db = await getDB();
 
-        await db.insert(reports).values({
-            title: parseAIReport.title || resumeFile.name,
-            matchPercentage: parseAIReport.matchPercentage || 0,
-            missingKeywords: parseAIReport.missingKeywords || [],
-            matchedKeywords: parseAIReport.matchedKeywords || [],
-            experienceRecommendations:
-                parseAIReport.experienceRecommendations || "",
-            formattingRecommendations:
-                parseAIReport.formattingRecommendations || "",
-            jobLink: jobLink,
-            jobDescription: jobDescriptionText,
-            pdfLink: key,
-            pdfContent: resumeText,
-        });
+        const report = await db
+            .insert(reports)
+            .values({
+                title: parseAIReport.title || resumeFile.name,
+                matchPercentage: parseAIReport.matchPercentage || 0,
+                missingKeywords: parseAIReport.missingKeywords || [],
+                matchedKeywords: parseAIReport.matchedKeywords || [],
+                experienceRecommendations:
+                    parseAIReport.experienceRecommendations || "",
+                formattingRecommendations:
+                    parseAIReport.formattingRecommendations || "",
+                jobLink: jobLink,
+                jobDescription: jobDescriptionText,
+                pdfLink: key,
+                pdfContent: resumeText,
+            })
+            .returning({ id: reports.id });
 
         return {
             success: true,
             message: "Report saved successfully.",
+            id: report[0].id,
         };
     } catch (error) {
         console.error("Error generating report:", error);
