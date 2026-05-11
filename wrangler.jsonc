@@ -24,6 +24,12 @@
             "localConnectionString": "postgresql://neondb_owner:npg_c0fp9HzDSFGn@ep-snowy-tree-ao4yp5bg-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
         },
     ],
+    "r2_buckets": [
+        {
+            "binding": "PMJOB_R2",
+            "bucket_name": "pmjob-r2",
+        },
+    ],
     "observability": {
         "enabled": true,
     },

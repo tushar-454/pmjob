@@ -1,9 +1,10 @@
 "use client";
 
+import { generateReport } from "@/actions/report";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowUp, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import FilePreview from "./FilePreview";
 
@@ -12,18 +13,26 @@ export default function ChatInputForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-    const router = useRouter();
+    // const router = useRouter();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() && !file) return;
 
+        const formData = new FormData();
+        formData.append("jobDescription", input);
+        if (file) {
+            formData.append("resume", file);
+        }
+
         setIsLoading(true);
-        // Simulate AI thinking and redirecting to standard mock report uuid
-        setTimeout(() => {
-            const uuid = "32432";
-            router.push(`/report/${uuid}`);
-        }, 800);
+        try {
+            await generateReport(formData);
+        } catch (error) {
+            console.error("Error submitting form:", error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

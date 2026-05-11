@@ -28,7 +28,7 @@ export default function FilePreview({
                 type="file"
                 ref={fileInputRef}
                 className="hidden"
-                accept="image/png, image/jpg, application/pdf"
+                accept="application/pdf"
                 onChange={handleFileChange}
             />
 
