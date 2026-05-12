@@ -7,8 +7,18 @@ import {
     varchar,
 } from "drizzle-orm/pg-core";
 
+export const users = pgTable("users", {
+    id: serial("id").primaryKey(),
+    email: varchar("email", { length: 255 }).notNull().unique(),
+    password: text("password").notNull(),
+    image: text("image"),
+});
+
 export const reports = pgTable("reports", {
     id: serial("id").primaryKey(),
+    userId: integer("user_id")
+        .notNull()
+        .references(() => users.id),
     title: varchar("title", { length: 255 }).notNull(),
     matchPercentage: integer("match_percentage"),
     missingKeywords: text("missing_keywords").array(),

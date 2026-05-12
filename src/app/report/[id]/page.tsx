@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { getDB } from "@/db";
 import { reports } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 import { AlertCircle, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -24,10 +25,14 @@ export default async function ReportDetailsPage({
         notFound();
     }
 
+    const userId = 1;
     const db = await getDB();
-    const result = await db.select().from(reports);
-    const report = result.find((item) => item.id === reportId);
+    const result = await db
+        .select()
+        .from(reports)
+        .where(and(eq(reports.id, reportId), eq(reports.userId, userId)));
 
+    const report = result[0];
     if (!report) {
         notFound();
     }

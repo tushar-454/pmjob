@@ -1,12 +1,14 @@
 import { SidebarSheet } from "@/components/sidebar-sheet";
 import { getDB } from "@/db";
 import { reports } from "@/db/schema";
+import { desc, eq } from "drizzle-orm";
 
 export default async function ReportLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const userId = 1;
     const db = await getDB();
     const reportList = await db
         .select({
@@ -14,18 +16,13 @@ export default async function ReportLayout({
             title: reports.title,
             createdAt: reports.createdAt,
         })
-        .from(reports);
-    const sortedReports = reportList
-        .sort(
-            (a, b) =>
-                (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
-        )
-        .slice(0, 50)
-        .map(({ id, title }) => ({ id, title }));
+        .from(reports)
+        .where(eq(reports.userId, userId))
+        .orderBy(desc(reports.createdAt));
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-background relative">
-            <SidebarSheet reports={sortedReports} />
+            <SidebarSheet reports={reportList} />
 
             {/* Main Content Area */}
             <main className="flex-1 h-full relative flex flex-col min-w-0 pt-16">

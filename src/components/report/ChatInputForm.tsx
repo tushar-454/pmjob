@@ -25,6 +25,7 @@ export default function ChatInputForm() {
         if (file) {
             formData.append("resume", file);
         }
+        formData.append("userId", "1");
 
         setIsLoading(true);
         try {

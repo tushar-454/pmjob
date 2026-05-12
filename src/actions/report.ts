@@ -8,6 +8,7 @@ import slugify from "slugify";
 export async function generateReport(formData: FormData) {
     const jobDescriptionValue = formData.get("jobDescription");
     const resumeFile = formData.get("resume");
+    const userIdValue = formData.get("userId") || "1";
 
     if (
         typeof jobDescriptionValue !== "string" ||
@@ -33,6 +34,7 @@ export async function generateReport(formData: FormData) {
                 jobLink: jobLink,
                 jobDescription: jobDescriptionText,
                 pdfLink: key,
+                userId: Number(userIdValue),
             })
             .returning({ id: reports.id });
 
