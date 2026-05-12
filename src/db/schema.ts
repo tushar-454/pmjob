@@ -1,4 +1,5 @@
 import {
+    boolean,
     integer,
     pgTable,
     serial,
@@ -8,17 +9,20 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
-    id: serial("id").primaryKey(),
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
     email: varchar("email", { length: 255 }).notNull().unique(),
-    password: text("password").notNull(),
+    emailVerified: boolean("email_verified").default(false).notNull(),
     image: text("image"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const reports = pgTable("reports", {
     id: serial("id").primaryKey(),
-    userId: integer("user_id")
+    userId: text("user_id")
         .notNull()
-        .references(() => users.id),
+        .references(() => users.id, { onDelete: "cascade" }),
     title: varchar("title", { length: 255 }).notNull(),
     matchPercentage: integer("match_percentage"),
     missingKeywords: text("missing_keywords").array(),
