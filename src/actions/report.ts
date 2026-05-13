@@ -37,7 +37,7 @@ export async function generateReport(formData: FormData) {
     try {
         const { env } = await getCloudflareContext({ async: true });
         const jobDescription = jobDescriptionValue.trim();
-        const { key } = await uploadResumeToCloudflareR2(resumeFile);
+        const { key } = await uploadResumeToCloudflareR2(resumeFile, env);
         const jobLink = isHttpUrl(jobDescription) ? jobDescription : "";
         const jobDescriptionText = jobLink ? "" : jobDescription;
 
@@ -77,8 +77,10 @@ export async function generateReport(formData: FormData) {
     }
 }
 
-async function uploadResumeToCloudflareR2(resumeFile: File) {
-    const { env } = await getCloudflareContext({ async: true });
+async function uploadResumeToCloudflareR2(
+    resumeFile: File,
+    env: CloudflareEnv,
+) {
     const isPdfType = resumeFile.type === "application/pdf";
     const hasPdfExt = resumeFile.name.toLowerCase().endsWith(".pdf");
 
