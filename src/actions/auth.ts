@@ -1,5 +1,5 @@
 "use server";
-import { auth } from "@/lib/auth";
+import { authFn } from "@/lib/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 
@@ -27,6 +27,7 @@ export const signIn = async (formData: FormData) => {
     }
 
     try {
+        const auth = await authFn();
         const result = await auth.api.signInEmail({
             body: parseResult.data,
             headers: await headers(),
@@ -54,6 +55,7 @@ export const signUp = async (formData: FormData) => {
     }
 
     try {
+        const auth = await authFn();
         const result = await auth.api.signUpEmail({
             body: parseResult.data,
             headers: await headers(),
@@ -69,6 +71,7 @@ export const signUp = async (formData: FormData) => {
 
 export const signOut = async () => {
     try {
+        const auth = await authFn();
         await auth.api.signOut({
             headers: await headers(),
         });

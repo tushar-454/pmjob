@@ -7,9 +7,9 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { db } from "@/db";
+import { getDB } from "@/db";
 import { reports } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { authFn } from "@/lib/auth";
 import { and, eq } from "drizzle-orm";
 import { AlertCircle, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { headers } from "next/headers";
@@ -28,6 +28,7 @@ export default async function ReportDetailsPage({
     }
 
     // Get authenticated user session
+    const auth = await authFn();
     const session = await auth.api.getSession({
         headers: await headers(),
     });
@@ -36,7 +37,7 @@ export default async function ReportDetailsPage({
     if (!userId) {
         notFound();
     }
-
+    const db = await getDB();
     const result = await db
         .select()
         .from(reports)

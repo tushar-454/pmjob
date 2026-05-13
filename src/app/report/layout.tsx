@@ -1,8 +1,8 @@
 import ReportHeader from "@/components/report/ReportHeader";
 import { SidebarSheet } from "@/components/sidebar-sheet";
-import { db } from "@/db";
+import { getDB } from "@/db";
 import { reports } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { authFn } from "@/lib/auth";
 import { desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
@@ -24,6 +24,7 @@ export default async function ReportLayout({
 }: {
     children: React.ReactNode;
 }) {
+    const auth = await authFn();
     const session = await auth.api.getSession({
         headers: await headers(),
     });
@@ -32,6 +33,7 @@ export default async function ReportLayout({
 
     const reportList: ReportListItem[] = [];
     if (userId) {
+        const db = await getDB();
         const dbResults = await db
             .select({
                 id: reports.id,

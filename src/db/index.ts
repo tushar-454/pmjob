@@ -25,5 +25,3 @@ export const getDB = async () => {
     });
     return drizzle(client);
 };
-
-export const db = await getDB();

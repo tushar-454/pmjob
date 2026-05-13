@@ -1,8 +1,8 @@
 "use server";
 
-import { db } from "@/db";
+import { getDB } from "@/db";
 import { reports } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { authFn } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 import slugify from "slugify";
@@ -11,36 +11,37 @@ export async function generateReport(formData: FormData) {
     const jobDescriptionValue = formData.get("jobDescription");
     const resumeFile = formData.get("resume");
 
-    // Check if user is authenticated
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-        return {
-            success: false,
-            error: "You must be logged in to generate a report",
-        };
-    }
-
-    if (
-        typeof jobDescriptionValue !== "string" ||
-        jobDescriptionValue.trim().length === 0 ||
-        !(resumeFile instanceof File)
-    ) {
-        return {
-            success: false,
-            error: "Job description and resume file are required",
-        };
-    }
-
     try {
+        // Check if user is authenticated
+        const auth = await authFn();
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session?.user?.id) {
+            return {
+                success: false,
+                error: "You must be logged in to generate a report",
+            };
+        }
+
+        if (
+            typeof jobDescriptionValue !== "string" ||
+            jobDescriptionValue.trim().length === 0 ||
+            !(resumeFile instanceof File)
+        ) {
+            return {
+                success: false,
+                error: "Job description and resume file are required",
+            };
+        }
+
         const { env } = await getCloudflareContext({ async: true });
         const jobDescription = jobDescriptionValue.trim();
         const { key } = await uploadResumeToCloudflareR2(resumeFile, env);
         const jobLink = isHttpUrl(jobDescription) ? jobDescription : "";
         const jobDescriptionText = jobLink ? "" : jobDescription;
-
+        const db = await getDB();
         const report = await db
             .insert(reports)
             .values({
