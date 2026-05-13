@@ -1,6 +1,6 @@
 import ReportHeader from "@/components/report/ReportHeader";
 import { SidebarSheet } from "@/components/sidebar-sheet";
-import { getDB } from "@/db";
+import { db } from "@/db";
 import { reports } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { desc, eq } from "drizzle-orm";
@@ -29,7 +29,6 @@ export default async function ReportLayout({
     });
 
     const userId = session?.user?.id;
-    const db = await getDB();
 
     const reportList: ReportListItem[] = [];
     if (userId) {

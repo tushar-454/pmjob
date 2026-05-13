@@ -1,6 +1,6 @@
 "use server";
 
-import { getDB } from "@/db";
+import { db } from "@/db";
 import { reports } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
@@ -40,8 +40,6 @@ export async function generateReport(formData: FormData) {
         const { key } = await uploadResumeToCloudflareR2(resumeFile);
         const jobLink = isHttpUrl(jobDescription) ? jobDescription : "";
         const jobDescriptionText = jobLink ? "" : jobDescription;
-
-        const db = await getDB();
 
         const report = await db
             .insert(reports)

@@ -7,7 +7,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { getDB } from "@/db";
+import { db } from "@/db";
 import { reports } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { and, eq } from "drizzle-orm";
@@ -37,7 +37,6 @@ export default async function ReportDetailsPage({
         notFound();
     }
 
-    const db = await getDB();
     const result = await db
         .select()
         .from(reports)
