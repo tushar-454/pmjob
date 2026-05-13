@@ -16,8 +16,17 @@ export const auth = betterAuth({
         },
         usePlural: true,
     }),
+
+    session: {
+        cookieCache: {
+            enabled: true,
+            maxAge: 5 * 60,
+            strategy: "compact",
+        },
+    },
     emailAndPassword: {
         enabled: true,
     },
+
     plugins: [nextCookies()],
 });
