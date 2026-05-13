@@ -32,6 +32,8 @@ export default function ChatInputForm() {
             const res = await generateReport(formData);
             if (res.success) {
                 toast.success(res.message, {
+                    richColors: true,
+                    closeButton: true,
                     position: "bottom-center",
                     id: "report-status",
                 });
@@ -61,8 +63,14 @@ export default function ChatInputForm() {
                                     []) {
                                     lastStatusLogIdRef.current = statusLog.id;
                                     toast(statusLog.message, {
+                                        richColors: true,
+                                        closeButton: true,
                                         position: "bottom-center",
                                         id: "report-status",
+                                        duration:
+                                            statusLog.message === "Report ready"
+                                                ? 3000
+                                                : Infinity,
                                     });
                                 }
                             }
