@@ -10,10 +10,6 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { extractText, getDocumentProxy } from "unpdf";
 
-const MAX_JOB_DESCRIPTION_CHARS = 6000;
-const MAX_RESUME_CHARS = 12000;
-const MAX_AI_RESPONSE_LOG_CHARS = 500;
-
 export class PMJobWorkflow extends WorkflowEntrypoint<
     CloudflareEnv,
     PMJobWorkflowParams
@@ -30,21 +26,21 @@ export class PMJobWorkflow extends WorkflowEntrypoint<
         await appendReportStatusLog(
             this.env,
             message.id,
-            "Resolving job description",
+            "Resolving job description...",
         );
         const jobDescription = await step.do(
             "resolve job description",
-            async () => resolveJobDescription(message),
+            async () => resolveJobDescription(this.env, message),
         );
         await appendReportStatusLog(
             this.env,
             message.id,
-            "Job description resolved",
+            "Job description resolved.",
         );
         await appendReportStatusLog(
             this.env,
             message.id,
-            "Extracting resume text",
+            "Extracting resume text...",
         );
         const resumeText = await step.do("extract resume text", async () =>
             readPdfTextFromR2(this.env.PMJOB_R2, message.pdfLink),
@@ -52,12 +48,12 @@ export class PMJobWorkflow extends WorkflowEntrypoint<
         await appendReportStatusLog(
             this.env,
             message.id,
-            "Resume text extracted",
+            "Resume text extracted.",
         );
         await appendReportStatusLog(
             this.env,
             message.id,
-            "Generating AI report",
+            "Generating AI report...",
         );
         const aiReport = await step.do(
             "generate ai report",
@@ -67,9 +63,9 @@ export class PMJobWorkflow extends WorkflowEntrypoint<
         await appendReportStatusLog(
             this.env,
             message.id,
-            "AI analysis completed",
+            "AI analysis completed.",
         );
-        await appendReportStatusLog(this.env, message.id, "Saving report");
+        await appendReportStatusLog(this.env, message.id, "Saving report...");
 
         await step.do("update report", async () =>
             updateReport(this.env, message.id, {
@@ -86,7 +82,10 @@ export class PMJobWorkflow extends WorkflowEntrypoint<
     }
 }
 
-async function resolveJobDescription(message: ReportQueueMessage) {
+async function resolveJobDescription(
+    env: CloudflareEnv,
+    message: ReportQueueMessage,
+) {
     const inline = message.jobDescription?.trim();
     if (inline) {
         return inline;
@@ -98,7 +97,7 @@ async function resolveJobDescription(message: ReportQueueMessage) {
     }
 
     try {
-        return await extractPageContent(url);
+        return await extractPageContent(env, url);
     } catch (error) {
         console.warn("Failed to extract job page content", error);
         return "";
@@ -122,36 +121,56 @@ async function readPdfTextFromR2(bucket: R2Bucket, key: string) {
     return text?.trim() ?? "";
 }
 
-async function extractPageContent(url: string) {
-    const res = await fetch(url, {
-        headers: {
-            "user-agent": "Mozilla/5.0 (compatible; CloudflareWorker/1.0)",
-        },
-    });
+async function extractPageContent(env: CloudflareEnv, url: string) {
+    const extractionPrompt = `Extract only the actual job description from the given job URL.
 
-    if (!res.ok) {
-        throw new Error(`Fetch failed: ${res.status}`);
+Return plain text only (no JSON, no markdown, no bullet symbols unless they are part of the original content).
+
+Source URL:
+${url}
+
+Rules:
+- Keep only role-relevant information: title, summary, responsibilities, requirements, qualifications, skills, location/employment type, compensation if present.
+- Remove all website boilerplate: navigation, footer, cookie notices, legal text, ads, related jobs, sign-in prompts, employer marketing fluff not specific to the role.
+- Preserve important wording from the posting and keep section meaning accurate.
+- Do not invent missing details.
+- If the content does not appear to contain a job description, return an empty string.
+`;
+
+    try {
+        const response = await env.AI.run(
+            "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+            {
+                messages: [
+                    {
+                        role: "system",
+                        content:
+                            "You extract clean job descriptions from noisy scraped text. Return plain text only.",
+                    },
+                    {
+                        role: "user",
+                        content: extractionPrompt,
+                    },
+                ],
+                max_tokens: 1200,
+            },
+        );
+
+        const aiText = extractAiResponseText(response);
+        const normalized = normalizeExtractedJobDescription(aiText);
+        console.log("Job Description:", normalized);
+        return normalized;
+    } catch (error) {
+        console.warn("AI job description extraction failed", error);
+        return "";
     }
+}
 
-    const html = await res.text();
-
-    return html
-        .replace(/<script[\s\S]*?<\/script>/gi, "")
-        .replace(/<style[\s\S]*?<\/style>/gi, "")
-        .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
-        .replace(/<svg[\s\S]*?<\/svg>/gi, "")
-        .replace(/<\/(p|div|section|article|h1|h2|h3|li)>/gi, "\n")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&#39;/g, "'")
-        .replace(/&quot;/g, '"')
-        .replace(/\s+\n/g, "\n")
-        .replace(/\n\s+/g, "\n")
-        .replace(/\n{2,}/g, "\n\n")
-        .replace(/[ \t]{2,}/g, " ")
+function normalizeExtractedJobDescription(text: string) {
+    return text
+        .replace(/^```[a-zA-Z]*\s*/g, "")
+        .replace(/\s*```$/g, "")
+        .replace(/^job description\s*:\s*/i, "")
         .trim();
 }
 
@@ -160,12 +179,6 @@ async function generateAiReport(
     jobDescription: string,
     resumeText: string,
 ) {
-    const safeJobDescription = truncateText(
-        jobDescription,
-        MAX_JOB_DESCRIPTION_CHARS,
-    );
-    const safeResumeText = truncateText(resumeText, MAX_RESUME_CHARS);
-
     const prompt = `You are an expert ATS resume reviewer. Analyze the resume against the job description and return a structured report.
 
 Return ONLY a JSON string (no markdown, no code fences, no extra text) that matches this schema:
@@ -189,10 +202,10 @@ Guidelines:
 - Be specific and realistic. Do not invent credentials not found in the resume.
 
 Job Description:
-${safeJobDescription}
+${jobDescription}
 
 Resume:
-${safeResumeText}
+${resumeText}
 `;
 
     const response = await env.AI.run(
@@ -217,14 +230,6 @@ ${safeResumeText}
     );
 
     const rawText = extractAiResponseText(response);
-    console.log("AI input lengths", {
-        jobDescription: safeJobDescription.length,
-        resumeText: safeResumeText.length,
-    });
-    console.log(
-        "AI response preview",
-        rawText.slice(0, MAX_AI_RESPONSE_LOG_CHARS),
-    );
 
     const jsonText = coerceJsonObject(rawText);
     const parsed = safeJsonParse(jsonText);
@@ -331,14 +336,6 @@ function normalizeAiReport(value: ParsedAiReport): AiReport {
                 ? value.formattingRecommendations
                 : "",
     };
-}
-
-function truncateText(value: string, maxChars: number) {
-    if (value.length <= maxChars) {
-        return value;
-    }
-
-    return value.slice(0, maxChars);
 }
 
 function normalizeNumber(value: unknown, fallback: number) {

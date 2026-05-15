@@ -64,7 +64,7 @@ export default function ChatInputForm() {
                                     lastStatusLogIdRef.current = statusLog.id;
                                     toast(statusLog.message, {
                                         richColors: true,
-                                        closeButton: true,
+                                        closeButton: false,
                                         position: "bottom-center",
                                         id: "report-status",
                                         duration:
@@ -83,7 +83,7 @@ export default function ChatInputForm() {
 
                             // Wait 2 seconds before next check
                             await new Promise((resolve) =>
-                                setTimeout(resolve, 2000),
+                                setTimeout(resolve, 800),
                             );
                             attempts++;
                         } catch (error) {
@@ -92,7 +92,7 @@ export default function ChatInputForm() {
                                 error,
                             );
                             await new Promise((resolve) =>
-                                setTimeout(resolve, 2000),
+                                setTimeout(resolve, 800),
                             );
                             attempts++;
                         }
